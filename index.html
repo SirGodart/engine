@@ -1,0 +1,764 @@
+<!DOCTYPE html>
+<html lang="en">
+	<head>
+		<title>Audi Engine</title>
+		<meta charset="utf-8">
+		<meta name="viewport" content="width=device-width, user-scalable=no, minimum-scale=1.0, maximum-scale=1.0">
+	</head>
+	<body bgcolor="#111111">
+
+		
+		<script src="js/libs/three.min.js"></script>
+
+	
+		<script src="js/libs/tween.min.js"></script>
+		<script src="js/libs/TweenLite.min.js"></script>
+		<script src="js/libs/EasePack.min.js"></script>
+		 <script src="js/libs/dat.gui.min.js"></script>
+
+		<script>
+
+		//GLOBAL
+			var dummy = new THREE.Object3D();
+			var keyDummy = new THREE.Object3D();
+			var keyNullDummy = new THREE.Object3D();
+			var cylDummy = new THREE.Object3D();
+			
+			var newDummy = new THREE.Object3D();
+			var parentDummy = new THREE.Object3D();
+			
+			var container, stats;
+			var camera, scene, renderer;
+			var updateMesh;
+		
+			var testBool = false;
+
+			var base, knop, klepje;
+			var lamboScene;
+			
+			var shaftGroup;
+
+
+			var circle = {radius: 0};
+			var angle;
+			var raycaster;
+			var mouse;
+
+			var targetRotation = 0;
+			var targetRotationOnMouseDown = 0;
+
+
+			var targetOpening = 0;
+			var targetOpeningOnMouseDown = 0;
+
+			var mouseX = 0;
+			var mouseY = 0;
+			var mouseXOnMouseDown = 0;
+			var mouseYOnMouseDown = 0;
+			var windowHalfX = window.innerWidth / 2;
+			var windowHalfY = window.innerHeight / 2;
+            
+            //loaders
+            var loader1, cylinders, keys2;
+			
+			
+			//meshes for GUI
+			var mesh01;
+			var updateGeo;
+			
+            var guiControl = 0;
+            
+            
+              var bool1 = bool2 = bool3 = bool4 = false;
+  
+
+  
+            guiControl = new function() {
+
+                this.speedIncrease = 0.10;
+          
+                
+            };
+
+            var gui = new dat.GUI();
+            gui.add(guiControl, 'speedIncrease', 0.10, 0.30);
+        
+	
+
+			init();
+			animate();
+           // delays();
+
+
+
+			
+
+			function init() {
+
+                container = document.createElement( 'div' );
+				document.body.appendChild( container );
+
+				//CAMERA 
+				camera = new THREE.PerspectiveCamera( 20, window.innerWidth / window.innerHeight, 1, 10000 );
+				camera.position.y = 0;
+				camera.position.x = 0;
+				camera.position.z = 5;
+                
+               
+				//SCENE
+				scene = new THREE.Scene();
+			
+				shaftGroup = new THREE.Group();
+				
+				
+				scene.add(shaftGroup);
+				scene.add(newDummy);
+
+					
+				scene.rotation.y = Math.PI/2;
+             scene.rotation.x = 15 * Math.PI/180;
+			//	scene.rotation.x = 90 * Math.PI/180
+			
+
+				
+			    //LIGHTNING
+				var hemiLight = new THREE.HemisphereLight( 0xffffff, 0xffffff, 0.6 );
+				hemiLight.color.setHSL( 3.6, 1, 0.6 );
+				hemiLight.groundColor.setHSL( 0.095, 1, 0.75 );
+				hemiLight.position.set( -50, 500, 10.0 );
+				scene.add( hemiLight );
+
+
+				var dirLight = new THREE.DirectionalLight( 0xffffff, 0.6 );
+				dirLight.color.setHSL( 0.1, 1, 0.95 );
+				dirLight.position.set( -1, 52.75, -30 );
+				dirLight.position.multiplyScalar( 50 );
+				scene.add( dirLight );
+
+				dirLight.castShadow = true;
+				dirLight.shadowMapWidth = 2048;
+				dirLight.shadowMapHeight = 2048;
+				var d = 50;
+				dirLight.shadowCameraLeft = -d;
+				dirLight.shadowCameraRight = d;
+				dirLight.shadowCameraTop = d;
+				dirLight.shadowCameraBottom = -d;
+				dirLight.shadowCameraFar = 3500;
+				dirLight.shadowBias = -0.0001;
+				dirLight.shadowDarkness = 0.35;
+				
+				
+				
+				
+				
+				
+                var spec = 0x777777;
+                var shine = 15;
+
+    
+ 			
+ 			//THREE MODEL LOADERS
+			  loader1 = new THREE.JSONLoader();
+    		 loader1.load( "js/models/shaft.json", function(geometry){
+
+	    			   
+                         geometry.computeMorphNormals();
+                         var material = new THREE.MeshPhongMaterial( { color: "black", specular: spec, shininess: shine, vertexColors: THREE.FaceColors } );
+                         mesh = new THREE.Mesh(geometry, material);
+                         mesh.position.set(0, 0, 0);
+                         mesh.scale.set(1, 1, 1);
+                         mesh.rotation.x = Math.PI/2 ;
+                        mesh.rotation.y = Math.PI/2 ;
+                        dummy.add( mesh );	
+                        dummy.position.set( 0, 0, 0 );
+                        dummy.rotation.x = (50 )* Math.PI/180;				
+						scene.add( dummy );
+				 
+			
+				    });
+				
+				
+				
+				
+				
+						  cylinders = new THREE.JSONLoader();
+    		 cylinders.load( "js/models/cyl01.json", function(geometry){
+
+	    			   for (var j = 0; j<2; j++) {
+				                for (var i = 0; i < 4; i++) {
+                                    
+                                    
+                             
+                                    
+				 
+						
+	  					 var material = new THREE.MeshPhongMaterial( { color: "black", specular: spec, shininess: shine, vertexColors: THREE.FaceColors } );
+					     mesh = new THREE.Mesh(geometry, material);
+					     mesh.position.set(0, 0, 0);
+				  		 mesh.position.z = -0.25 + j/20;// + i/14;;
+					  	 mesh.position.y = -0.25 + j/30 ;//+ i/10;
+					  	 mesh.position.x = (0 - i/5.1) - j/25.3; 
+					     mesh.scale.set(1, 1, 1);
+					     mesh.rotation.x = Math.PI/2 + (i*0 * Math.PI/180) + (j*270 * Math.PI/180) ;
+					     mesh.rotation.y = Math.PI/2 ;
+                                    
+                      
+                                    
+                    //MOVE CYLINDERS WITHOUT LOSING NULL
+                   
+                          cylDummy.position.z = -0.25;
+                    
+                      cylDummy.position.y = -0.25;
+                                    
+                                    
+                    
+						cylDummy.add( mesh );	
+                                    
+                                                
+                     
+					   
+						
+						scene.add( cylDummy );
+					  
+                        }
+					   }
+                 
+                 
+                         
+				    });
+				
+				
+				
+			
+				
+				
+				
+	
+				
+				
+				
+				
+				
+						 keys2 = new THREE.JSONLoader();
+					
+				
+    		 keys2.load( "js/models/key00.json", function(geometry){
+
+	    			   
+				
+						 
+			for (var i = 0; i < 4; i++) {
+				 		
+				  for (var j = 0; j<2; j++) {
+	  					 var material = new THREE.MeshPhongMaterial( { color: "black", specular: spec, shininess: shine, vertexColors: THREE.FaceColors } );
+					     var mesh = new THREE.Mesh(geometry, material);
+					  var mesh2 = new THREE.Mesh(geometry, material);
+				
+				
+				
+					  if (j === 0) {
+					  
+                          
+                          
+                    //second part
+				 		mesh.position.z = -0.25 ;// + i/14;
+				 		mesh.position.y = -0.25;//  - i/10;
+				        mesh.position.x = 0 - i/5.1 - j/25.3; 
+					    mesh.scale.set(1, 1, 1); 
+					    mesh.rotation.x = Math.PI/2 + ( Math.PI/180) + (j*260 * Math.PI/180) ;
+					    mesh.rotation.y = Math.PI/2 ;// (j*-180 * Math.PI/180)  ;
+                          
+                        keyNullDummy.position.z = 0.16;
+                        keyNullDummy.position.y = 0.17;  
+                          
+                             
+						keyNullDummy.add( mesh );		
+					
+						
+						  
+					  } else {
+						  
+						mesh2.position.z = 0.27; // + i/14;
+				 		mesh2.position.y = -0.21;//  - i/10;  
+				   	    scene.add(parentDummy);
+				        parentDummy.position.z = 0.0 ;
+                          
+                          //change this position null works
+                          newDummy.position.z = -0.23;
+                          newDummy.position.y = 0.18;
+							
+						  
+						  parentDummy.add(keyNullDummy);	
+					
+						  
+						  
+				    mesh2.position.x = 0 - i/5.1 - j/28; 
+				
+				
+					    mesh2.scale.set(1, 1, 1);
+					    mesh2.rotation.x = Math.PI/2 + (i*0 * Math.PI/180) + (j*260 * Math.PI/180) ;
+					    mesh2.rotation.y = Math.PI/2 ;// (j*-180 * Math.PI/180)  ;
+				 
+		
+						  
+						newDummy.add( mesh2 );		
+					
+						  
+						  }
+
+				  	}
+				 }
+
+				    });
+				
+				
+				
+				
+			
+			
+				
+				
+
+			
+				
+				
+				
+				
+				
+				
+				
+				
+			
+				
+				
+				
+				
+				
+				mouse = new THREE.Vector2();
+
+				//RENDERER
+				renderer = new THREE.WebGLRenderer({antialias:true});
+				renderer.setClearColor( '#111111' );
+				renderer.setPixelRatio( window.devicePixelRatio );
+				renderer.setSize( window.innerWidth, window.innerHeight );
+				renderer.gammaInput = true;
+				renderer.gammaOutput = true;
+				renderer.shadowMapEnabled = true;
+				renderer.shadowMapCullFace = THREE.CullFaceBack;
+
+				container.appendChild(renderer.domElement);
+				document.addEventListener( 'mousedown', onDocumentMouseDown, false );
+				document.addEventListener( 'touchstart', onDocumentTouchStart, false );
+				document.addEventListener( 'touchmove', onDocumentTouchMove, false );
+				window.addEventListener( 'resize', onWindowResize, false );
+		
+			}
+
+
+
+
+			function onWindowResize() {
+
+				windowHalfX = window.innerWidth / 2;
+				windowHalfY = window.innerHeight / 2;
+
+				camera.aspect = window.innerWidth / window.innerHeight;
+				camera.updateProjectionMatrix();
+
+				renderer.setSize( window.innerWidth, window.innerHeight );
+
+			}
+
+
+			
+
+			function onDocumentMouseMove( event ) {
+
+				mouseX = event.clientX - windowHalfX;
+				mouseY = event.clientY - windowHalfY;
+
+				targetRotation = targetRotationOnMouseDown + ( mouseX - mouseXOnMouseDown ) * 0.02;
+				targetOpening = targetOpeningOnMouseDown + ( mouseY - mouseYOnMouseDown ) * 0.02;
+				
+				
+				
+
+			}
+
+			function onDocumentMouseUp( event ) {
+
+				document.removeEventListener( 'mousemove', onDocumentMouseMove, false );
+				document.removeEventListener( 'mouseup', onDocumentMouseUp, false );
+				document.removeEventListener( 'mouseout', onDocumentMouseOut, false );
+
+			}
+
+			function onDocumentMouseOut( event ) {
+
+				document.removeEventListener( 'mousemove', onDocumentMouseMove, false );
+				document.removeEventListener( 'mouseup', onDocumentMouseUp, false );
+				document.removeEventListener( 'mouseout', onDocumentMouseOut, false );
+
+			}
+
+			function onDocumentTouchStart( event ) {
+
+				if ( event.touches.length == 1 ) {
+
+					event.preventDefault();
+
+					mouseXOnMouseDown = event.touches[ 0 ].pageX - windowHalfX;
+					mouseYOnMouseDown = event.touches[ 0 ].pageY - windowHalfY;
+					targetRotationOnMouseDown = targetRotation;
+					targetOpeningOnMouseDown = targetOpening;
+
+				mouse.x = ( event.clientX / renderer.domElement.width ) * 2 - 1;
+				mouse.y = - ( event.clientY / renderer.domElement.height ) * 2 + 1;
+
+					raycaster.setFromCamera( mouse, camera );
+
+                }
+			}
+
+			function onDocumentTouchMove( event ) {
+
+				if ( event.touches.length == 1 ) {
+
+					event.preventDefault();
+
+					mouseX = event.touches[ 0 ].pageX - windowHalfX;
+					mouseY = event.touches[ 0 ].pageY - windowHalfY;
+					targetRotation = targetRotationOnMouseDown + ( mouseX - mouseXOnMouseDown ) * 0.05;
+					targetOpening = targetOpeningOnMouseDown + ( mouseY - mouseYOnMouseDown ) * 0.05;
+
+				}
+
+			}
+			
+	
+			function onDocumentMouseDown( event ) {
+
+				event.preventDefault();
+				document.addEventListener( 'mousemove', onDocumentMouseMove, false );
+				document.addEventListener( 'mouseup', onDocumentMouseUp, false );
+				document.addEventListener( 'mouseout', onDocumentMouseOut, false );
+
+
+				mouseXOnMouseDown = event.clientX - windowHalfX;
+				targetRotationOnMouseDown = targetRotation;
+
+
+				mouse.x = ( event.clientX / renderer.domElement.width ) * 2 - 1;
+				mouse.y = - ( event.clientY / renderer.domElement.height ) * 2 + 1;
+
+				
+
+			
+
+
+			}
+
+			
+
+
+
+			function animate() {
+
+				requestAnimationFrame( animate );
+				render();
+				
+				
+			
+			}
+            
+            
+          
+            
+         
+            
+            
+            
+
+                var cursorX;
+    var cursorY;
+    document.onmousemove = function(e){
+        cursorX = e.pageX;
+        cursorY = e.pageY;
+    }
+
+
+
+			var counter = counter1 = counter2 = counter3  = 0;
+            var countValue; 
+	
+			function render() {
+                
+                
+                if (document.readyState == 'complete') {
+                    
+                 console.log('ready'); 
+                    countValue = 0.02 + guiControl.speedIncrease;
+                }
+
+			TWEEN.update();
+				
+				
+			
+				
+	
+				
+			//	console.log(newDummy.children.length);
+			
+                
+                //load models first
+                
+                if (loader1.onLoadComplete && cylinders.onLoadComplete && keys2.onLoadComplete) {
+                    
+                    
+                    counter += countValue;
+                    dummy.rotation.x += countValue;
+                    
+                    
+                    				
+        
+      
+                
+                
+                    
+                // console.log('now');   
+                    
+                      if (counter > 4 ) {
+                          
+                          
+                            counter1 += countValue;
+                          
+                      }
+                    
+                    
+                    if (counter > 8) {
+                        
+                        
+                        counter2 += countValue;
+                        
+                        
+                    }
+                    
+                    
+                    
+                    if (counter > 12) {
+                     
+                             counter3 += countValue;
+                        
+                        
+                    }
+                  
+                    
+                }
+                
+                
+          /*
+                
+            if (bool1 == true) {
+                
+                    counter1 += countValue;
+            }
+                
+               if (bool2 == true) {
+                
+                    counter2 += countValue;
+            }    
+                
+                
+                   if (bool3 == true) {
+                
+                    counter3 += countValue;
+            }
+            
+            
+            */
+                
+            
+            
+                
+			
+                
+            
+              
+            keyNullDummy.rotation.x =  Math.sin( -counter ) / (3.8 + 8/10 ) ;
+            newDummy.rotation.x = Math.sin( -counter ) / (3.8 + 8/10 );
+		
+
+				
+			
+               
+                     
+            if (keyNullDummy.children.length > 0) {
+                
+        
+              keyNullDummy.children[0].position.z = Math.cos( counter3 ) /(19.5  )+0.25 - 0.01 - 0.4143;
+              keyNullDummy.children[0].position.y = Math.cos( -counter3) /(20 ) +0.25 - 0.074- 0.4143 ;	
+            //  keyNullDummy.children[0].rotation.x =  Math.sin( -counter3 ) / (3.8 + 8/10 ) ;
+                
+              keyNullDummy.children[1].position.z = Math.cos( counter2 ) /(19.5  )+0.25 - 0.01- 0.4143;
+              keyNullDummy.children[1].position.y = Math.cos( -counter2 ) /(20 ) +0.25 - 0.074- 0.4143  ;	
+            //     keyNullDummy.children[1].rotation.x =  Math.sin( -counter2 ) / (3.8 + 8/10 ) ;
+                
+              keyNullDummy.children[2].position.z = Math.cos( counter1 ) /(19.5  )+0.25 - 0.01- 0.4143;
+              keyNullDummy.children[2].position.y = Math.cos( -counter1 ) /(20 ) +0.25 - 0.074- 0.4143  ;	
+             //    keyNullDummy.children[2].rotation.x =  Math.sin( -counter1 ) / (3.8 + 8/10 ) ;
+                
+              keyNullDummy.children[3].position.z = Math.cos( counter ) /(19.5  )+0.25 - 0.01- 0.4143;
+              keyNullDummy.children[3].position.y = Math.cos( -counter ) /(20 ) +0.25 - 0.074- 0.4143  ;	
+               //  keyNullDummy.children[3].rotation.x =  Math.sin( -counter3 ) / (3.8 + 8/10 ) ;
+        
+                  
+                
+            }
+       
+        
+            
+                //cylinders
+            if (cylDummy.children.length > 0 ) {
+                
+                 
+            //7 = 3
+            //6 = 2 
+            //etc etc
+                cylDummy.children[0].position.z = Math.cos( counter3 ) /(19.5  )+0.25 - 0.01;
+                cylDummy.children[0].position.y = Math.cos( -counter3 ) /(20 ) +0.25 - 0.074 ;	
+                cylDummy.children[1].position.z = Math.cos( counter2 ) /(19.5  )+0.25 - 0.01;
+                cylDummy.children[1].position.y = Math.cos( -counter2 ) /(20 ) +0.25 - 0.074 ;	
+                cylDummy.children[2].position.z = Math.cos( counter1 ) /(19.5  )+0.25 - 0.01;
+                cylDummy.children[2].position.y = Math.cos( -counter1 ) /(20 ) +0.25 - 0.074 ;	
+                cylDummy.children[3].position.z = Math.cos( counter ) /(19.5  )+0.25 - 0.01;
+                cylDummy.children[3].position.y = Math.cos( -counter ) /(20 ) +0.25 - 0.074 ;	
+
+         
+
+                cylDummy.children[4].position.z = Math.cos( -counter3 ) /(-19.5  )+0.29 - 0.01;
+                cylDummy.children[4].position.y = Math.cos( counter3 ) /(20 ) +0.25 - 0.074 ;	
+                cylDummy.children[5].position.z = Math.cos( -counter2 ) /(-19.5  )+0.29 - 0.01;
+                cylDummy.children[5].position.y = Math.cos( counter2 ) /(20 ) +0.25 - 0.074 ;	
+                cylDummy.children[6].position.z = Math.cos( -counter1 ) /(-19.5  )+0.29 - 0.01;
+                cylDummy.children[6].position.y = Math.cos( counter1 ) /(20 ) +0.25 - 0.074 ;	
+                cylDummy.children[7].position.z = Math.cos( -counter ) /(-19.5  )+0.29 - 0.01;
+                cylDummy.children[7].position.y = Math.cos( counter ) /(20 ) +0.25 - 0.074 ;	
+
+
+                
+            }
+                
+                
+            
+                
+	
+            //left bars
+                
+            if (newDummy.children.length > 0) {
+                
+           
+                
+                    newDummy.children[0].position.z = Math.cos( -counter3 ) /(-19.5  )+0.25 - 0.01 - 0.5 + (0.52 + 0.0551 - 0.0029 + 0.0188 -0.999/29);
+                    newDummy.children[0].position.y  = Math.cos( counter3 ) /(20 ) +0.25 - (0.214 + 0.1953 + 0.0188 + 0.0521 -0.999/29) ;	
+                    newDummy.children[1].position.z = Math.cos( -counter2 ) /(-19.5  )+0.25 - 0.01 - 0.5 + (0.52 + 0.0551 - 0.0029 + 0.0188 -0.999/29);
+                    newDummy.children[1].position.y  = Math.cos( counter2 ) /(20 ) +0.25 - (0.214 + 0.1953 + 0.0188 + 0.0521 -0.999/29) ;	
+                    newDummy.children[2].position.z = Math.cos( -counter1 ) /(-19.5  )+0.25 - 0.01 - 0.5 + (0.52 + 0.0551 - 0.0029 + 0.0188 -0.999/29);
+                    newDummy.children[2].position.y  = Math.cos( counter1 ) /(20 ) +0.25 - (0.214 + 0.1953 + 0.0188 + 0.0521 -0.999/29) ;	
+                    newDummy.children[3].position.z = Math.cos( -counter ) /(-19.5  )+0.25 - 0.01 - 0.5 + (0.52 + 0.0551 - 0.0029 + 0.0188 -0.999/29);
+                    newDummy.children[3].position.y  = Math.cos( counter ) /(20 ) +0.25 - (0.214 + 0.1953 + 0.0188 + 0.0521 -0.999/29) ;	
+                    
+                    
+            
+     
+            }
+                
+                
+        
+                
+         
+//console.log(cursorX);
+			
+         
+				
+
+			
+			
+			
+                  
+                if (cursorX )  {
+                  
+                        scene.rotation.y += ( cursorX/30 * Math.PI/180 + Math.PI/2 - (20+window.innerWidth/200) * Math.PI/180  - scene.rotation.y ) * 0.09;
+                        scene.rotation.x +=  (  cursorY/50 * Math.PI/180 + 15 * Math.PI/180 - scene.rotation.x ) * 0.09;
+            
+                    
+                    
+               
+                
+                  
+              }
+                
+              
+                
+				
+				
+				
+				
+				renderer.render( scene, camera);
+				
+			}
+            
+            
+            
+            /*
+            
+            
+            function delays() {
+               
+                setTimeout(function() {
+
+
+                    bool1 = true;
+
+
+
+                }, 600);
+
+
+                 setTimeout(function() {
+
+
+                    bool2 = true;
+
+
+
+                }, 1200);
+
+
+
+               setTimeout(function() {
+
+
+                    bool3 = true;
+
+
+
+                }, 1800);
+
+
+                     setTimeout(function() {
+
+
+                    bool4 = true;
+
+
+
+                }, 2400);
+
+            }
+
+
+*/
+		</script>
+
+	</body>
+</html>
